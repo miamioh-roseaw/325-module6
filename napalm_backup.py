@@ -17,10 +17,7 @@ devices = {
     'mgmt-rtr': '10.10.10.1',
     'reg-rtr': '10.10.10.2',
     'ham-rtr': '10.10.10.3',
-    'mid-rtr': '10.10.10.4',
-    'mgmt-sw': '10.10.10.5',
-    'ham-sw': '10.10.10.6',
-    'mid-sw': '10.10.10.7'
+    'mid-rtr': '10.10.10.4'
 }
 
 # Create backup directory if not exists
