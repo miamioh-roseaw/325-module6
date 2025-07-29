@@ -20,7 +20,7 @@ pipeline {
 
                     echo "[INFO] Installing NAPALM and dependencies..."
                     ~/.local/bin/pip3 install --user --upgrade pip
-                    ~/.local/bin/pip3 install --user napalm napalm-ios
+                    ~/.local/bin/pip3 install --user napalm netmiko
                 '''
             }
         }
