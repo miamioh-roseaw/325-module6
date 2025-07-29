@@ -14,7 +14,6 @@ if not USERNAME or not PASSWORD:
 
 # Define devices
 devices = {
-    'mgmt-rtr': '10.10.10.1',
     'reg-rtr': '10.10.10.2',
     'ham-rtr': '10.10.10.3',
     'mid-rtr': '10.10.10.4'
