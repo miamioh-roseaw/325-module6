@@ -2,34 +2,36 @@ pipeline {
     agent any
 
     environment {
-        SCRIPT = 'get_uptime.py'
+        SCRIPT = 'napalm_backup.py'
         PATH = "${HOME}/.local/bin:${env.PATH}"
         PYTHONPATH = "${HOME}/.local/lib/python3.10/site-packages"
     }
 
     stages {
-        stage('Install Nornir and Dependencies') {
+        stage('Install pip and NAPALM') {
             steps {
                 sh '''
-                    echo "[INFO] Installing Python packages..."
+                    echo "[INFO] Checking for pip..."
                     if ! command -v pip3 > /dev/null; then
                         echo "[INFO] pip3 not found. Installing..."
                         wget https://bootstrap.pypa.io/get-pip.py -O get-pip.py
                         python3 get-pip.py --user
                     fi
 
-                    ~/.local/bin/pip3 install --user nornir nornir-netmiko nornir-utils netmiko
+                    echo "[INFO] Installing NAPALM and dependencies..."
+                    ~/.local/bin/pip3 install --user --upgrade pip
+                    ~/.local/bin/pip3 install --user napalm netmiko
                 '''
             }
         }
 
-        stage('Run Nornir Script') {
+        stage('Run NAPALM Backup Script') {
             environment {
                 CISCO_CREDS = credentials('cisco-ssh-creds')
             }
             steps {
                 sh '''
-                    echo "[INFO] Running Nornir uptime collection..."
+                    echo "[INFO] Executing NAPALM backup script..."
                     export CISCO_CREDS_USR="${CISCO_CREDS_USR}"
                     export CISCO_CREDS_PSW="${CISCO_CREDS_PSW}"
 
@@ -38,24 +40,21 @@ pipeline {
             }
         }
 
-        stage('Check for Output Files') {
+        stage('List Backup Files') {
             steps {
-                sh '''
-                    echo "[INFO] Checking for generated uptime files..."
-                    ls -lh *_uptime.txt || echo "[WARNING] No uptime output files were generated."
-                '''
+                sh 'ls -lh backups || echo "[WARN] No backup directory found."'
             }
         }
 
-        stage('Archive Uptime Results') {
+        stage('Archive Config Backups') {
             steps {
                 script {
-                    def results = sh(script: "ls *_uptime.txt 2>/dev/null || true", returnStdout: true).trim()
-                    if (results) {
-                        echo "[INFO] Archiving uptime results..."
-                        archiveArtifacts artifacts: '*_uptime.txt', allowEmptyArchive: false
+                    def backups = sh(script: "ls backups/*.txt 2>/dev/null || true", returnStdout: true).trim()
+                    if (backups) {
+                        echo "[INFO] Archiving configuration backups..."
+                        archiveArtifacts artifacts: 'backups/*.txt', allowEmptyArchive: false
                     } else {
-                        echo "[WARNING] No files to archive."
+                        echo "[WARNING] No backup files to archive."
                     }
                 }
             }
@@ -63,11 +62,14 @@ pipeline {
     }
 
     post {
+        success {
+            echo '[✅] NAPALM backup pipeline completed successfully.'
+        }
         failure {
-            echo "[ERROR] Pipeline failed."
+            echo '[❌] Pipeline failed. Check logs above for details.'
         }
         always {
-            echo "[INFO] Pipeline complete."
+            echo '[ℹ️] Pipeline execution complete.'
         }
     }
 }
